@@ -102,6 +102,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
 
         testCopyQuestion();
 
+        testChangeFeedbackGiver();
         testChangeFeedbackRecipient();
         testVisibilityOptionsCorrespondToFeedbackPath();
 
@@ -152,7 +153,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         assertEquals(editedSession.toString(), savedSession.toString());
         assertEquals("overflow-auto alert alert-success statusMessage",
                 feedbackEditPage.getStatusMessage().findElement(By.className("statusMessage")).getAttribute("class"));
-        assertEquals(Const.StatusMessages.FEEDBACK_SESSION_EDITED, feedbackEditPage.getStatus());
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_SESSION_EDITED);
         feedbackEditPage.reloadPage();
         feedbackEditPage.verifyHtmlMainContent("/instructorFeedbackEditSuccess.html");
 
@@ -192,6 +193,12 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         feedbackEditPage.clickNewQuestionButton();
         feedbackEditPage.selectNewQuestionType("TEXT");
         assertTrue(feedbackEditPage.verifyNewEssayQuestionFormIsDisplayed());
+        feedbackEditPage.waitForTextContainedInElementPresence(
+                By.id("visibilityMessage--1"),
+                "You can see your own feedback in the results page later on.");
+        feedbackEditPage.waitForTextContainedInElementPresence(
+                By.id("visibilityMessage--1"),
+                "Instructors in this course can see your response, the name of the recipient, and your name.");
         assertTrue("Visibility preview for new question should be displayed",
                    feedbackEditPage.isVisibilityPreviewDisplayedForNewQuestion());
     }
@@ -202,19 +209,18 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
 
         feedbackEditPage.clickAddQuestionButton();
         
-        assertEquals(Const.StatusMessages.FEEDBACK_QUESTION_TEXTINVALID, feedbackEditPage.getStatus());
-
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_QUESTION_TEXTINVALID);
         
         ______TS("empty number of max respondants field");
 
         feedbackEditPage.fillNewQuestionBox("filled qn");
         feedbackEditPage.fillNewQuestionDescription("more details");
         feedbackEditPage.selectRecipientsToBeStudents();
-        feedbackEditPage.fillNumOfEntitiesToGiveFeedbackToBox("");
+        feedbackEditPage.fillNumOfEntitiesToGiveFeedbackToBoxForNewQuestion("");
         feedbackEditPage.clickCustomNumberOfRecipientsButton();
         feedbackEditPage.clickAddQuestionButton();
         
-        assertEquals(Const.StatusMessages.FEEDBACK_QUESTION_NUMBEROFENTITIESINVALID, feedbackEditPage.getStatus());
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_QUESTION_NUMBEROFENTITIESINVALID);
 
     }
 
@@ -225,7 +231,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         feedbackEditPage.clickMaxNumberOfRecipientsButton();
         feedbackEditPage.clickAddQuestionButton();
 
-        assertEquals(Const.StatusMessages.FEEDBACK_QUESTION_ADDED, feedbackEditPage.getStatus());
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_QUESTION_ADDED);
         assertNotNull(BackDoor.getFeedbackQuestion(courseId, feedbackSessionName, 1));
         feedbackEditPage.verifyHtmlMainContent("/instructorFeedbackQuestionAddSuccess.html");
     }
@@ -274,21 +280,21 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         
         feedbackEditPage.clickNewQuestionButton();
         feedbackEditPage.selectNewQuestionType("TEXT");
-        feedbackEditPage.waitForElementVisibility(browser.driver.findElement(By.id("questionTableNew")));
+        feedbackEditPage.waitForElementVisibility(browser.driver.findElement(By.id("questionTable--1")));
         feedbackEditPage.clickVisibilityOptionsForNewQuestion();
         feedbackEditPage.clickResponseVisiblityCheckBoxForNewQuestion("RECEIVER_TEAM_MEMBERS");
         feedbackEditPage.clickVisibilityPreviewForNewQuestion();
         
         feedbackEditPage.waitForTextContainedInElementPresence(
-                By.id("visibilityMessage"),
+                By.id("visibilityMessage--1"),
                 "The recipient's team members can see your response, but not the name of the recipient, or your name.");
         feedbackEditPage.selectRecipientTypeForNewQuestion("Instructors in the course");
         
         feedbackEditPage.waitForTextContainedInElementAbsence(
-                By.id("visibilityMessage"),
+                By.id("visibilityMessage--1"),
                 "The recipient's team members can see your response, but not the name of the recipient, or your name.");
         
-        feedbackEditPage.getDiscardChangesLink(-1).click();
+        feedbackEditPage.clickDiscardChangesLink(-1);
         feedbackEditPage.waitForConfirmationModalAndClickCancel();
         
         ______TS("add question 2 and edit it to giver's team members and giver");
@@ -323,7 +329,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
                    + visibilityMessage2.getText(), visibilityMessage2.getText()
                    .contains("Instructors in this course can see your response, the name of the recipient, and your name."));
         
-        feedbackEditPage.getDeleteQuestionLink(2).click();
+        feedbackEditPage.clickDeleteQuestionLink(2);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
     }
 
@@ -334,27 +340,27 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         feedbackEditPage.selectNewQuestionType("MCQ");
         
         ______TS("Click cancel but click no to confirmation prompt");
-        feedbackEditPage.getDiscardChangesLink(-1).click();
+        feedbackEditPage.clickDiscardChangesLink(-1);
         feedbackEditPage.waitForConfirmationModalAndClickCancel();
         assertTrue(feedbackEditPage.verifyNewMcqQuestionFormIsDisplayed());
         
         
         ______TS("Click cancel and click yes to confirmation prompt");
-        feedbackEditPage.getDiscardChangesLink(-1).click();
+        feedbackEditPage.clickDiscardChangesLink(-1);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
         assertFalse(feedbackEditPage.verifyNewMcqQuestionFormIsDisplayed());
 
         ______TS("Make sure controls disabled by Team Contribution questions are re-enabled after cancelling");
         feedbackEditPage.clickNewQuestionButton();
         feedbackEditPage.selectNewQuestionType("CONTRIB");
-        feedbackEditPage.getDiscardChangesLink(-1).click();
+        feedbackEditPage.clickDiscardChangesLink(-1);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
 
         feedbackEditPage.clickNewQuestionButton();
         feedbackEditPage.selectNewQuestionType("NUMSCALE");
-        assertTrue(feedbackEditPage.isAllFeedbackPathOptionsEnabled());
+        assertTrue(feedbackEditPage.isAllFeedbackPathOptionsEnabledForNewQuestion());
 
-        feedbackEditPage.getDiscardChangesLink(-1).click();
+        feedbackEditPage.clickDiscardChangesLink(-1);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
 
     }
@@ -378,7 +384,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         
 
         ______TS("Click cancel but click no to confirmation prompt");
-        feedbackEditPage.getDiscardChangesLink(qnIndex).click();
+        feedbackEditPage.clickDiscardChangesLink(qnIndex);
         feedbackEditPage.waitForConfirmationModalAndClickCancel();
         assertTrue(feedbackEditPage.isDiscardChangesButtonVisible(qnIndex));
         
@@ -389,7 +395,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         String qnTextAfterEdit = feedbackEditPage.getQuestionBoxText(qnIndex);
         assertFalse(qnTextOriginal.equals(qnTextAfterEdit));
 
-        feedbackEditPage.getDiscardChangesLink(qnIndex).click();
+        feedbackEditPage.clickDiscardChangesLink(qnIndex);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
         assertFalse(feedbackEditPage.isDiscardChangesButtonVisible(qnIndex));
         String qnTextAfterCancelEdit = feedbackEditPage.getQuestionBoxText(qnIndex);
@@ -401,7 +407,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         assertTrue(feedbackEditPage.isOptionForSelectingNumberOfEntitiesVisible(qnIndex));
 
         // Delete it to reset the status for the following tests
-        feedbackEditPage.getDeleteQuestionLink(qnIndex).click();
+        feedbackEditPage.clickDeleteQuestionLink(qnIndex);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
     }
     
@@ -411,7 +417,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         feedbackEditPage.clickEditQuestionButton(2);
         feedbackEditPage.selectQuestionNumber(2, 1);
         feedbackEditPage.clickSaveExistingQuestionButton(2);
-        assertEquals(Const.StatusMessages.FEEDBACK_QUESTION_EDITED, feedbackEditPage.getStatus());
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_QUESTION_EDITED);
         
         ______TS("questions still editable even if questions numbers became inconsistent");
         
@@ -507,6 +513,99 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         questionId = BackDoor.getFeedbackQuestion(courseId, feedbackSessionName, 3).getId();
         BackDoor.deleteFeedbackQuestion(questionId);
         
+    }
+    
+    private void testChangeFeedbackGiver() {
+        feedbackEditPage = getFeedbackEditPage();
+        feedbackEditPage.clickQuestionEditForQuestion1();
+        
+        ______TS("change giver to \"Students in this course\" from \"Me (Session creator)\"");
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        assertTrue(feedbackEditPage.isAllRecipientOptionsDisplayed(1));
+        
+        ______TS("change giver to \"Instructors in this course\" from \"Students in this course\"");
+        feedbackEditPage.selectGiverTypeForQuestion1("Instructors in this course");
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.STUDENTS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.INSTRUCTORS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.TEAMS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM_MEMBERS, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(
+                            FeedbackParticipantType.OWN_TEAM_MEMBERS_INCLUDING_SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.NONE, 1));
+        
+        ______TS("change giver to \"Teams in this course\" from \"Instructors in this course\"");
+        feedbackEditPage.selectGiverTypeForQuestion1("Teams in this course");
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.STUDENTS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.INSTRUCTORS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.TEAMS, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM_MEMBERS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(
+                        FeedbackParticipantType.OWN_TEAM_MEMBERS_INCLUDING_SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.NONE, 1));
+        
+        ______TS("change giver to \"Me (Session creator)\" from \"Teams in this course\"");
+        feedbackEditPage.selectGiverTypeForQuestion1("Me (Session creator)");
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.STUDENTS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.INSTRUCTORS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.TEAMS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM_MEMBERS, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(
+                        FeedbackParticipantType.OWN_TEAM_MEMBERS_INCLUDING_SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.NONE, 1));
+        
+        ______TS("change giver such that first visible recipient is selected");
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team members");
+        feedbackEditPage.selectGiverTypeForQuestion1("Me (Session creator)");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team members and Giver");
+        feedbackEditPage.selectGiverTypeForQuestion1("Me (Session creator)");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team members");
+        feedbackEditPage.selectGiverTypeForQuestion1("Instructors in this course");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team members and Giver");
+        feedbackEditPage.selectGiverTypeForQuestion1("Instructors in this course");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team");
+        feedbackEditPage.selectGiverTypeForQuestion1("Teams in this course");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        feedbackEditPage.selectGiverTypeForQuestion1("Students in this course");
+        feedbackEditPage.selectRecipientTypeForQuestion1("Giver's team members");
+        feedbackEditPage.selectGiverTypeForQuestion1("Teams in this course");
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        ______TS("add new question");
+        feedbackEditPage.clickNewQuestionButton();
+        feedbackEditPage.selectNewQuestionType("TEXT");
+        
+        assertEquals("TEAMS", feedbackEditPage.getGiverTypeForQuestion1());
+        assertEquals("SELF", feedbackEditPage.getRecipientTypeForQuestion1());
+        
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.STUDENTS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.INSTRUCTORS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.TEAMS, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM, 1));
+        assertFalse(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.OWN_TEAM_MEMBERS, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(
+                        FeedbackParticipantType.OWN_TEAM_MEMBERS_INCLUDING_SELF, 1));
+        assertTrue(feedbackEditPage.isRecipientOptionDisplayed(FeedbackParticipantType.NONE, 1));
     }
     
     private void testChangeFeedbackRecipient() {
@@ -649,16 +748,16 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         
         ______TS("qn " + qnNumber + " delete then cancel");
 
-        feedbackEditPage.getDeleteQuestionLink(qnNumber).click();
+        feedbackEditPage.clickDeleteQuestionLink(qnNumber);
         feedbackEditPage.waitForConfirmationModalAndClickCancel();
         assertNotNull(BackDoor.getFeedbackQuestion(courseId, feedbackSessionName, qnNumber));
 
         
         ______TS("qn " + qnNumber + " delete then accept");
 
-        feedbackEditPage.getDeleteQuestionLink(qnNumber).click();
+        feedbackEditPage.clickDeleteQuestionLink(qnNumber);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
-        assertEquals(Const.StatusMessages.FEEDBACK_QUESTION_DELETED, feedbackEditPage.getStatus());
+        feedbackEditPage.verifyStatus(Const.StatusMessages.FEEDBACK_QUESTION_DELETED);
         assertNull(BackDoor.getFeedbackQuestion(courseId, feedbackSessionName, qnNumber));
         
     }
@@ -739,7 +838,7 @@ public class InstructorFeedbackEditPageUiTest extends BaseUiTestCase {
         
         // Delete the question
         feedbackEditPage = getFeedbackEditPage();
-        feedbackEditPage.getDeleteQuestionLink(1).click();
+        feedbackEditPage.clickDeleteQuestionLink(1);
         feedbackEditPage.waitForConfirmationModalAndClickOk();
     }
     
